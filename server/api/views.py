@@ -22,12 +22,12 @@ def get_image_description(request):
 
             # Use the chat API for GPT-4
             response = openai.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are an expert at describing images."},
                     {"role": "user", "content": f"Describe the image at this URL: {image_url}"}
                 ],
-                max_tokens=50,
+                max_tokens=20,
             )
 
             description = response['choices'][0]['message']['content'].strip()
