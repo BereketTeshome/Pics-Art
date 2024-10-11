@@ -6,10 +6,6 @@ This project is an image upload and management application that allows users to 
 
 - [Technologies Used](#technologies-used)
 - [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Technologies Used
 
