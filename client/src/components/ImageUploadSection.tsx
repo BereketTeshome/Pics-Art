@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaTrash } from "react-icons/fa";
 
 interface ImageUploadSectionProps {
@@ -7,7 +7,7 @@ interface ImageUploadSectionProps {
   uploading: boolean;
   uploadImage: (e: any) => void;
   deleteImage: (id: number) => void;
-  generateDescription: (imageId: number, imgUrl: string) => void; // Fixed prop
+  generateDescription: (imageId: number, imgUrl: string) => void;
   imagesRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -20,6 +20,14 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   generateDescription,
   imagesRef,
 }) => {
+  const [expandedDescriptionId, setExpandedDescriptionId] = useState<
+    number | null
+  >(null);
+
+  const toggleDescription = (id: number) => {
+    setExpandedDescriptionId((prevId) => (prevId === id ? null : id));
+  };
+
   return (
     <section className="w-full py-16 bg-transparent" ref={imagesRef}>
       <div className="container px-6 mx-auto">
@@ -72,7 +80,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                 <img
                   src={image.imgName}
                   alt={`uploaded ${image.id}`}
-                  className="object-fit w-full cursor-pointer h-full rounded-lg min-h-[200px] shadow-lg border border-gray-700 hover:shadow-white transition-shadow"
+                  className="object-cover w-full cursor-pointer rounded-lg h-[300px] shadow-lg border border-gray-700 hover:shadow-white transition-shadow"
                 />
 
                 {/* Generate Description Button */}
@@ -85,15 +93,25 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
                 {/* Placeholder for the image description */}
                 {image.description && (
-                  <p className="mt-2 text-sm text-gray-300">
-                    {image.description}
-                  </p>
+                  <div className="mt-2 text-sm text-gray-300">
+                    {expandedDescriptionId === image.id
+                      ? image.description
+                      : `${image.description.substring(0, 100)}...`}
+                    <button
+                      onClick={() => toggleDescription(image.id)}
+                      className="ml-2 text-blue-400 hover:underline"
+                    >
+                      {expandedDescriptionId === image.id
+                        ? "See Less"
+                        : "See More"}
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-400">No images uploaded yet.</p>
+          <div className="text-white">No images uploaded yet.</div>
         )}
       </div>
     </section>

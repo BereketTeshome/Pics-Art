@@ -173,7 +173,7 @@ const HomePage: React.FC = () => {
         uploading={uploading}
         uploadImage={uploadImage}
         deleteImage={deleteImage}
-        generateDescription={generateDescription} // Pass the function here
+        generateDescription={generateDescription}
         imagesRef={imagesRef}
       />
     </div>
