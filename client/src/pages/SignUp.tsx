@@ -70,7 +70,7 @@ const SignUp: React.FC = () => {
 
       // Send registration request using axios
       await axios.post(
-        "https://pics-art-five.vercel.app/api/auth/registration/",
+        "https://pics-art-backend.vercel.app/api/auth/registration/",
         {
           name: validatedData.name,
           email: validatedData.email,

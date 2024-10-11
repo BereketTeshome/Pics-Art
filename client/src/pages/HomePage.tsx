@@ -34,7 +34,7 @@ const HomePage: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://pics-art-five.vercel.app/api/v1/images/"
+        "https://pics-art-backend.vercel.app/api/v1/images/"
       );
       const data = await response.json();
       const userImages = data.filter(
@@ -66,7 +66,7 @@ const HomePage: React.FC = () => {
       const fileUrl = await getDownloadURL(fileRef);
 
       const response = await fetch(
-        "https://pics-art-five.vercel.app/api/v1/images/",
+        "https://pics-art-backend.vercel.app/api/v1/images/",
         {
           method: "POST",
           headers: {
@@ -101,7 +101,7 @@ const HomePage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://pics-art-five.vercel.app/api/v1/images/${id}/`,
+        `https://pics-art-backend.vercel.app/api/v1/images/${id}/`,
         {
           method: "DELETE",
           headers: {
@@ -125,7 +125,7 @@ const HomePage: React.FC = () => {
   const generateDescription = async (imageId: number, image_url: string) => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/image-description/",
+        "https://pics-art-backend.vercel.app/api/image-description/",
         {
           method: "POST",
           headers: {
