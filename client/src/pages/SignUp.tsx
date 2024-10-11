@@ -69,7 +69,7 @@ const SignUp: React.FC = () => {
       const validatedData = schema.parse(formData);
 
       // Send registration request using axios
-      const response = await axios.post(
+      await axios.post(
         "https://pics-art-five.vercel.app/api/auth/registration/",
         {
           name: validatedData.name,
