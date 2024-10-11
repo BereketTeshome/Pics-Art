@@ -49,7 +49,7 @@ const SignUp: React.FC = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
+  const [_, setSuccess] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Handle input change
