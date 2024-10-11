@@ -53,7 +53,7 @@ const SignIn: React.FC = () => {
 
       // Send login request using axios to the backend
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/auth/login/",
+        "https://pics-art-five.vercel.app/api/auth/login/",
         {
           email: validatedData.email,
           password: validatedData.password,
@@ -72,7 +72,7 @@ const SignIn: React.FC = () => {
       // Optionally, store user information in cookies or local storage
       cookie.set("user", JSON.stringify(user), { path: "/" });
 
-      console.log("Login successful", user);
+      // console.log("Login successful", user);
 
       setSuccess(true);
       alert("Login successful!");

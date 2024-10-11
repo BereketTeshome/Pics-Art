@@ -1,16 +1,19 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import GlowingBG from "../components/GlowingBG";
 import { v4 as uuidv4 } from "uuid";
-import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { storage } from "../utils/firebase.ts";
+import { jwtDecode } from "jwt-decode";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import Cookies from "universal-cookie";
+import { FaTrash } from "react-icons/fa"; // Importing trash icon
 
 const HomePage: React.FC = () => {
-  const user = useUser();
-  const supabase = useSupabaseClient();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState("");
-  const [media, setMedia] = useState<any>([]);
-  const imagesRef = useRef<HTMLDivElement>(null); // Ref for "Your Images" section
+  const [media, setMedia] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const imagesRef = useRef<HTMLDivElement>(null);
+  const cookies = new Cookies();
+  const token = cookies.get("jwt_access_token");
 
   const scrollToImages = () => {
     if (imagesRef.current) {
@@ -18,73 +21,117 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const magicLinkLogin = async () => {
-    if (!email) {
-      setError("Please enter an email.");
-      return;
+  const getJWTToken = () => {
+    if (!token) {
+      alert("Please log in to upload images.");
+      return null;
     }
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
+    return token;
+  };
 
-    const { data, error } = await supabase.auth.signInAnonymously();
-
-    if (error) {
-      alert(
-        "Error communicating with Supabase, make sure to use a real email address!"
+  const fetchUserImages = async (userEmail: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        "https://pics-art-five.vercel.app/api/v1/images/"
       );
-      console.log(error);
-    } else {
-      alert("Successfully logged in!");
+      const data = await response.json();
+      const userImages = data.filter(
+        (image: any) => image.createdBy === userEmail
+      );
+      setMedia(userImages);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  async function getMedia() {
-    const { data, error } = await supabase.storage
-      .from("ImageBucket")
-      .list(userId + "/", {
-        limit: 10,
-        offset: 0,
-        sortBy: {
-          column: "name",
-          order: "asc",
-        },
-      });
+  const uploadImage = async (e: any) => {
+    const file = e.target.files[0];
+    const token = getJWTToken();
 
-    if (data) {
-      setMedia(data);
-    } else {
-      console.log(71, error);
+    if (!token) {
+      return;
     }
-  }
 
-  const validateEmail = (email: string) => {
-    // Regular expression to check email format
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    return emailRegex.test(email);
+    const decodedToken: any = jwtDecode(token);
+    const userEmail = decodedToken.email;
+
+    try {
+      setUploading(true);
+      const fileRef = ref(storage, `images/${uuidv4()}`);
+      await uploadBytes(fileRef, file);
+      const fileUrl = await getDownloadURL(fileRef);
+
+      const response = await fetch(
+        "https://pics-art-five.vercel.app/api/v1/images/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            imgName: fileUrl,
+            createdBy: userEmail,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const newImage = await response.json();
+        alert("Image uploaded successfully!");
+        setMedia((prevMedia) => [...prevMedia, newImage]);
+      } else {
+        alert("Failed to upload image to the server.");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("An error occurred while uploading the image.");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+  const deleteImage = async (id: number) => {
+    const token = getJWTToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `https://pics-art-five.vercel.app/api/v1/images/${id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        setMedia((prevMedia) => prevMedia.filter((image) => image.id !== id));
+        alert("Image deleted successfully.");
+      } else {
+        alert("Failed to delete image.");
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      alert("An error occurred while deleting the image.");
+    }
   };
 
-  async function uploadImage(e: any) {
-    let file = e.target.files[0];
-
-    const { data, error } = await supabase.storage
-      .from("ImageBucket")
-      .upload(userId + "/" + uuidv4(), file);
-
-    if (data) {
-      getMedia();
-    } else {
-      console.log(error);
+  useEffect(() => {
+    const token = getJWTToken();
+    if (token) {
+      const decodedToken: any = jwtDecode(token);
+      const userEmail = decodedToken.email;
+      fetchUserImages(userEmail);
     }
-  }
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
       <GlowingBG />
 
       {/* Hero Section */}
@@ -99,7 +146,7 @@ const HomePage: React.FC = () => {
             </p>
             <button
               onClick={scrollToImages}
-              className="relative inline-block px-8 py-2 text-lg font-semibold text-white transition-all bg-orange-500 rounded-lg shadow-lg hover:bg-orange-400"
+              className="relative mb-10 md:mb-1 inline-block px-8 py-2 text-lg font-semibold text-white transition-all bg-orange-500 rounded-lg shadow-lg hover:bg-orange-400"
             >
               Explore
             </button>
@@ -116,92 +163,78 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Image Display Section */}
+      {/* Image Upload Section */}
       <section className="w-full py-16 bg-transparent" ref={imagesRef}>
         <div className="container px-6 mx-auto">
           <div className="flex justify-between">
             <h2 className="mb-12 text-3xl font-bold text-center text-gray-300 md:text-4xl">
-              Your Uploaded Images
+              Upload Your Images
             </h2>
           </div>
 
           <div className="text-white">
-            {user === null ? (
-              <div className="w-full max-w-md p-6 mx-auto text-white bg-gray-800 rounded-lg shadow-md">
-                <h1 className="mb-4 text-3xl font-bold text-center text-gray-200">
-                  Enter your email to sign in
-                </h1>
-                <p className="mb-6 text-lg text-center text-gray-400">
-                  We'll send you a magic link to sign in.
-                </p>
-
-                <form className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block mb-2 text-sm font-medium text-gray-300"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      className="block w-full px-4 py-2 text-white bg-gray-900 border border-gray-600 rounded-lg focus:ring focus:ring-blue-500 focus:outline-none focus:border-blue-500"
-                      placeholder="Enter your email"
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setError(null); // Clear error message when the user types
-                      }}
-                    />
-                    {error && (
-                      <p className="mt-2 text-sm text-red-500">{error}</p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={magicLinkLogin}
-                    className="w-full px-6 py-3 text-lg font-semibold text-center text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-500 focus:ring-opacity-50"
-                  >
-                    Log In
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between w-full mb-4">
-                  {/* File Upload Button */}
-                  <label
-                    htmlFor="file-upload"
-                    className="px-6 py-3 text-lg font-semibold text-center text-white transition-all bg-green-600 rounded-lg cursor-pointer hover:bg-green-500 focus:outline-none focus:ring focus:ring-green-500 focus:ring-opacity-50"
-                  >
-                    Choose File
-                  </label>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => uploadImage(e)}
-                  />
-
-                  {/* Sign Out Button */}
-                  <button
-                    onClick={() => signOut()}
-                    className="px-6 py-3 text-lg font-semibold text-center text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-500 focus:ring-opacity-50"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-
-                <p className="text-center text-gray-400">Your Images</p>
-              </>
-            )}
+            <div className="flex items-center justify-between w-full mb-4">
+              {/* File Upload Button */}
+              <label
+                htmlFor="file-upload"
+                className="px-6 py-3 text-lg font-semibold text-center text-white transition-all bg-green-600 rounded-lg cursor-pointer hover:bg-green-500 focus:outline-none focus:ring focus:ring-green-500 focus:ring-opacity-50"
+              >
+                {uploading ? "Uploading..." : "Choose File"}
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => uploadImage(e)}
+                disabled={uploading}
+              />
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Image Display Section */}
+      {loading ? (
+        <div className="text-white">Loading images...</div>
+      ) : media.length > 0 ? (
+        <section className="w-full py-16 bg-transparent">
+          <div className="container px-6 mx-auto">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
+              {media.map((image: any) => (
+                <div
+                  key={image.id}
+                  className="relative group transition-transform transform hover:scale-105"
+                >
+                  {/* Delete Icon */}
+                  <button
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                    onClick={() => deleteImage(image.id)}
+                  >
+                    <FaTrash className="w-6 h-6" />
+                  </button>
+                  <img
+                    src={image.imgName}
+                    alt={`uploaded ${image.id}`}
+                    className="object-fit w-full cursor-pointer h-full rounded-lg min-h-[200px] shadow-lg border border-gray-700 hover:shadow-white transition-shadow"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="w-full py-16 bg-transparent">
+          <div className="container px-6 mx-auto text-center">
+            <img
+              src="/404.png"
+              alt="No images"
+              className="object-cover w-64 h-w-64 mx-auto mb-6"
+            />
+            <p className="text-xl text-white">No images uploaded yet.</p>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
