@@ -20,8 +20,8 @@ def get_image_description(request):
             # Use GPT-4 model
             GPT_MODEL = "gpt-4o"
             messages=[
-                    {"role": "system", "content": "You are an AI model that describes images accurately and precisely based on the given firebase image URL."},
-                    {"role": "user", "content": f"Please describe the image at this URL: {image_url}"}
+                    {"role": "system", "content": "You are an AI model that describes images accurately and precisely based on the given image URL. If you can not read the url correctly just do your own generic explanation so that you won't get wrong"},
+                    {"role": "user", "content": f"If possible please describe the image at this URL: {image_url} If you can not read the url do your own image description but make it generic to not get wrong about the image"}
                 ]
             response = client.chat.completions.create(
                 model=GPT_MODEL,
