@@ -34,6 +34,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Get the OpenAI API key from the .env file
+OPENAI_API_KEY = env.str("OPENAI_API_KEY")
+
+
 
 # Application definition
 
@@ -63,7 +67,8 @@ INSTALLED_APPS = [
     
     #apps
     "users",
-    "images"
+    "images",
+    'api'
     # "products",
     # "cart",
     # "payment"

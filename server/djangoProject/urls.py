@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("api/v1/", include("images.urls")),
+    path('api/', include('api.urls')),  # Include API routes
 
     # path("api/v1/", include("products.urls")),
     # path("api/v1/", include("cart.urls")),

@@ -122,6 +122,38 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const generateDescription = async (imageId: number, image_url: string) => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/image-description/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            image_url: image_url,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMedia((prevMedia) =>
+          prevMedia.map((image) =>
+            image.id === imageId
+              ? { ...image, description: data.description }
+              : image
+          )
+        );
+      } else {
+        console.error("Failed to generate description");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+    }
+  };
+
   useEffect(() => {
     const token = getJWTToken();
     if (token) {
@@ -141,6 +173,7 @@ const HomePage: React.FC = () => {
         uploading={uploading}
         uploadImage={uploadImage}
         deleteImage={deleteImage}
+        generateDescription={generateDescription} // Pass the function here
         imagesRef={imagesRef}
       />
     </div>

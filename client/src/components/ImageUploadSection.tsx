@@ -7,6 +7,7 @@ interface ImageUploadSectionProps {
   uploading: boolean;
   uploadImage: (e: any) => void;
   deleteImage: (id: number) => void;
+  generateDescription: (imageId: number, imgUrl: string) => void; // Fixed prop
   imagesRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -16,6 +17,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   uploading,
   uploadImage,
   deleteImage,
+  generateDescription,
   imagesRef,
 }) => {
   return (
@@ -65,23 +67,33 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                 >
                   <FaTrash className="w-6 h-6" />
                 </button>
+
+                {/* Display Image */}
                 <img
                   src={image.imgName}
                   alt={`uploaded ${image.id}`}
                   className="object-fit w-full cursor-pointer h-full rounded-lg min-h-[200px] shadow-lg border border-gray-700 hover:shadow-white transition-shadow"
                 />
+
+                {/* Generate Description Button */}
+                <button
+                  onClick={() => generateDescription(image.id, image.imgName)}
+                  className="w-full px-3 py-2 mt-4 text-lg text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-400"
+                >
+                  Generate Description
+                </button>
+
+                {/* Placeholder for the image description */}
+                {image.description && (
+                  <p className="mt-2 text-sm text-gray-300">
+                    {image.description}
+                  </p>
+                )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="container px-6 mx-auto text-center">
-            <img
-              src="/404.png"
-              alt="No images"
-              className="object-cover w-64 mx-auto mb-6 h-w-64"
-            />
-            <p className="text-xl text-white">No images uploaded yet.</p>
-          </div>
+          <p className="text-center text-gray-400">No images uploaded yet.</p>
         )}
       </div>
     </section>
