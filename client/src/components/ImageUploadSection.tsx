@@ -7,7 +7,7 @@ interface ImageUploadSectionProps {
   uploading: boolean;
   uploadImage: (e: any) => void;
   deleteImage: (id: number) => void;
-  generateDescription: (imageId: number, imgUrl: string) => void;
+  generateDescription: (imageId: number, imgUrl: string) => Promise<void>;
   imagesRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -23,9 +23,16 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   const [expandedDescriptionId, setExpandedDescriptionId] = useState<
     number | null
   >(null);
+  const [generatingIds, setGeneratingIds] = useState<number[]>([]);
 
   const toggleDescription = (id: number) => {
     setExpandedDescriptionId((prevId) => (prevId === id ? null : id));
+  };
+
+  const handleGenerateDescription = async (imageId: number, imgUrl: string) => {
+    setGeneratingIds((prev) => [...prev, imageId]);
+    await generateDescription(imageId, imgUrl);
+    setGeneratingIds((prev) => prev.filter((id) => id !== imageId));
   };
 
   return (
@@ -85,10 +92,15 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
                 {/* Generate Description Button */}
                 <button
-                  onClick={() => generateDescription(image.id, image.imgName)}
+                  onClick={() =>
+                    handleGenerateDescription(image.id, image.imgName)
+                  }
                   className="w-full px-3 py-2 mt-4 text-lg text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-400"
+                  disabled={generatingIds.includes(image.id)}
                 >
-                  Generate Description
+                  {generatingIds.includes(image.id)
+                    ? "Generating..."
+                    : "Generate Description"}
                 </button>
 
                 {/* Placeholder for the image description */}
@@ -96,15 +108,21 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                   <div className="mt-2 text-sm text-gray-300">
                     {expandedDescriptionId === image.id
                       ? image.description
-                      : `${image.description.substring(0, 100)}...`}
-                    <button
-                      onClick={() => toggleDescription(image.id)}
-                      className="ml-2 text-blue-400 hover:underline"
-                    >
-                      {expandedDescriptionId === image.id
-                        ? "See Less"
-                        : "See More"}
-                    </button>
+                      : image.description.length > 100
+                      ? `${image.description.substring(0, 100)}...`
+                      : image.description}
+
+                    {/* Show "See More" only if the description is long */}
+                    {image.description.length > 100 && (
+                      <button
+                        onClick={() => toggleDescription(image.id)}
+                        className="ml-2 text-blue-400 hover:underline"
+                      >
+                        {expandedDescriptionId === image.id
+                          ? "See Less"
+                          : "See More"}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
