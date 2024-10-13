@@ -1,42 +1,53 @@
 from django.views.decorators.csrf import csrf_exempt
-from openai import OpenAI
-from django.http import JsonResponse
-from django.conf import settings
 import json
+import requests
+from PIL import Image
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from django.http import JsonResponse
+from io import BytesIO
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Load MobileNetV2
+model = MobileNetV2(weights='imagenet')
+
 @csrf_exempt
 def get_image_description(request):
     if request.method == 'POST':
         try:
-            # Parse the JSON body
-            body = json.loads(request.body)
-            image_url = body.get('image_url')
-            print("Image URL:", image_url)
-
+            body = json.loads(request.body)  # Parse the incoming JSON
+            image_url = body.get('image_url')  # Get the image URL from the body
+            
+            print("url: ", image_url)  # Debug print for the URL
+            
             if not image_url:
                 return JsonResponse({'error': 'No image URL provided'}, status=400)
 
-            # Use GPT-4 model
-            GPT_MODEL = "gpt-4o"
-            messages=[
-                    {"role": "system", "content": "You are an AI model that describes images accurately and precisely based on the given image URL. If you can not read the url correctly just do your own generic explanation so that you won't get wrong"},
-                    {"role": "user", "content": f"If possible please describe the image at this URL: {image_url} If you can not read the url do your own image description but make it generic to not get wrong about the image"}
-                ]
-            response = client.chat.completions.create(
-                model=GPT_MODEL,
-                messages=messages,
-                temperature=0,
-                max_tokens=60
-            )
-            description = response.choices[0].message.content
-            print("desc:", description)
-            return JsonResponse({'description': description}, status=200)
+            # Download the image
+            response = requests.get(image_url)
+            if response.status_code != 200:
+                return JsonResponse({'error': 'Failed to fetch the image from URL'}, status=400)
 
+            image = Image.open(BytesIO(response.content)).resize((224, 224))
+            image_array = np.array(image)
+
+            # Preprocess the image for MobileNet
+            image_array = preprocess_input(image_array)
+            image_array = np.expand_dims(image_array, axis=0)
+
+            # Predict the class probabilities
+            predictions = model.predict(image_array)
+            
+            # Decode the predictions
+            decoded_predictions = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=3)[0]
+            
+            # Create a description based on the predictions
+            description = ', '.join([f"{label} ({prob:.2f})" for (_, label, prob) in decoded_predictions])
+            return JsonResponse({'description': description})
 
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
-
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
