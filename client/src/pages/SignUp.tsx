@@ -69,15 +69,12 @@ const SignUp: React.FC = () => {
       const validatedData = schema.parse(formData);
 
       // Send registration request using axios
-      await axios.post(
-        "https://pics-art-backend.vercel.app/api/auth/registration/",
-        {
-          name: validatedData.name,
-          email: validatedData.email,
-          password1: validatedData.password1,
-          password2: validatedData.password2,
-        }
-      );
+      await axios.post("http://127.0.0.1:8000/api/auth/registration/", {
+        name: validatedData.name,
+        email: validatedData.email,
+        password1: validatedData.password1,
+        password2: validatedData.password2,
+      });
 
       setSuccess(true);
       navigate("/login");

@@ -5,8 +5,8 @@
       "src": "djangoProject/wsgi.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11",
+        "maxLambdaSize": "1700mb",
+        "runtime": "python3.10",
         "timeout": 60
       }
     }
