@@ -97,7 +97,18 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:5173"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000"
+    "https://backend.erkabconsulting.com"
+    "https://backend.erkabconsulting.com/"
+]
+
+CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"] 
+
+CORS_ALLOW_HEADERS = ["content-type", "authorization", "x-csrftoken"] 
 
 # ALLOWED_HOSTS = ["*"]
 

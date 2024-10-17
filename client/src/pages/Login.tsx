@@ -53,7 +53,7 @@ const SignIn: React.FC = () => {
 
       // Send login request using axios to the backend
       const response = await axios.post(
-        "https://pics-art-backend.vercel.app/api/auth/login/",
+        "http://127.0.0.1:8000/api/auth/login/",
         {
           email: validatedData.email,
           password: validatedData.password,

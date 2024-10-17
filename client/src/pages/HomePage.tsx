@@ -33,9 +33,7 @@ const HomePage: React.FC = () => {
   const fetchUserImages = async (userEmail: string) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://pics-art-backend.vercel.app/api/v1/images/"
-      );
+      const response = await fetch("http://127.0.0.1:8000/api/v1/images/");
       const data = await response.json();
       const userImages = data.filter(
         (image: any) => image.createdBy === userEmail
@@ -65,20 +63,17 @@ const HomePage: React.FC = () => {
       await uploadBytes(fileRef, file);
       const fileUrl = await getDownloadURL(fileRef);
 
-      const response = await fetch(
-        "https://pics-art-backend.vercel.app/api/v1/images/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            imgName: fileUrl,
-            createdBy: userEmail,
-          }),
-        }
-      );
+      const response = await fetch("http://127.0.0.1:8000/api/v1/images/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          imgName: fileUrl,
+          createdBy: userEmail,
+        }),
+      });
 
       if (response.ok) {
         const newImage = await response.json();
@@ -101,7 +96,7 @@ const HomePage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `https://pics-art-backend.vercel.app/api/v1/images/${id}/`,
+        `http://127.0.0.1:8000/api/v1/images/${id}/`,
         {
           method: "DELETE",
           headers: {
@@ -125,7 +120,7 @@ const HomePage: React.FC = () => {
   const generateDescription = async (imageId: number, image_url: string) => {
     try {
       const response = await fetch(
-        "https://pics-art-backend.vercel.app/api/image-description/",
+        "http://127.0.0.1:8000/api/image-description/",
         {
           method: "POST",
           headers: {
