@@ -50,10 +50,8 @@ def get_image_description(request):
         except json.JSONDecodeError:
             logger.error("Invalid JSON data")
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
-
         except Exception as e:
             logger.error(f"Error: {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
-
